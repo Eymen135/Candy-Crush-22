@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Candy Crush – Modlu & Ortalanmýþ</title>
+<style>
+body {
+    font-family: Arial;
+    margin:0;
+    background:#f7e8ff;
+    display:flex;
+    flex-direction: column;
+    align-items: center; /* yatay ortala */
+}
+
+h1, h2, p { text-align: center; }
+
+#menu, #game, #settings { display:none; }
+
+button {
+    padding:10px 20px;
+    margin:5px;
+    font-size:18px;
+    cursor:pointer;
+}
+
+/* BOARD */
+#board {
+    display:grid;
+    gap:4px;
+    border:5px solid #333;
+    background:#ddd;
+    padding:5px;
+    transition: transform .3s;
+    justify-content:center; /* grid yatay ortala */
+    align-content:center;   /* grid dikey ortala */
+}
+
+/* TILE */
+.block {
+    background:#fff;
+    border-radius:10px;
+    position:relative;
+    overflow:hidden;
+}
+
+.tile {
+    background-size:cover;
+    width:100%; height:100%;
+    cursor:pointer;
+    position:absolute;
+    transition: top .3s, transform .2s;
+}
+
+/* MODLAR – ZOOM + MERKEZLEME */
+.mode-phone #board { transform: scale(1.25); transform-origin:center center; }
+.mode-tablet #board { transform: scale(1.05); transform-origin:center center; }
+.mode-desktop #board { transform: scale(0.9); transform-origin:center center; }
+</style>
+</head>
+<body class="mode-desktop">
+
+<h1>Candy Crush – Modlu & Ortalanmýþ</h1>
+
+<!-- MENÜ -->
+<div id="menu">
+  <button onclick="startGame()">Oyuna Baþla</button>
+  <button onclick="openSettings()">Ayarlar</button>
+</div>
+
+<!-- OYUN -->
+<div id="game">
+  <h2 id="levelTitle"></h2>
+  <p>Puan: <span id="score">0</span> | Hamle: <span id="moves">0</span> | Hedef: <span id="target">0</span></p>
+  <div id="board"></div>
+  <button onclick="backMenu()">Ana Menü</button>
+</div>
+
+<!-- AYARLAR -->
+<div id="settings">
+  <h2>Ayarlar</h2>
+  <button onclick="setMode('phone')">?? Telefon Modu</button>
+  <button onclick="setMode('tablet')">?? Tablet Modu</button>
+  <button onclick="setMode('desktop')">?? Bilgisayar Modu</button>
+  <br><br>
+  <button onclick="closeSettings()">Geri</button>
+</div>
+
+<script>
+/* --- OYUN VERÝLERÝ --- */
+let width=7, height=7, tileSize=70;
+const candyImages=["resim1.png","resim2.png","resim3.png"];
+const explosionImage="patlama_efekti.png";
+
+let board=document.getElementById("board");
+let tiles=[], selected=null;
+let score=0, moves=15, targetScore=100, level=1;
+
+let menu=document.getElementById("menu");
+let game=document.getElementById("game");
+let settings=document.getElementById("settings");
+
+/* --- MENÜ --- */
+showMenu();
+function showMenu(){ hideAll(); menu.style.display="block"; }
+function backMenu(){ hideAll(); showMenu(); }
+function hideAll(){ menu.style.display=game.style.display=settings.style.display="none"; }
+
+/* --- AYARLAR --- */
+function openSettings(){ hideAll(); settings.style.display="block"; }
+
+function setMode(mode){
+  document.body.className="mode-"+mode;
+  if(mode==="phone") tileSize=45;
+  if(mode==="tablet") tileSize=60;
+  if(mode==="desktop") tileSize=70;
+  alert(mode.toUpperCase()+" modu aktif!");
+  closeSettings();
+}
+
+function closeSettings(){ hideAll(); showMenu(); }
+
+/* --- OYUN BAÞLAT --- */
+function startGame(){
+  score=0; moves=15; targetScore=100*level;
+  document.getElementById("score").innerText=score;
+  document.getElementById("moves").innerText=moves;
+  document.getElementById("target").innerText=targetScore;
+  document.getElementById("levelTitle").innerText="Seviye "+level;
+
+  hideAll(); game.style.display="block";
+  createBoard();
+}
+
+/* --- TAHTA --- */
+function createBoard(){
+  tiles=[]; board.innerHTML="";
+  board.style.gridTemplateColumns=`repeat(${width},${tileSize}px)`;
+  board.style.gridTemplateRows=`repeat(${height},${tileSize}px)`;
+
+  for(let i=0;i<width*height;i++){
+    let block=document.createElement("div");
+    block.className="block";
+    block.style.width=tileSize+"px";
+    block.style.height=tileSize+"px";
+
+    let tile=document.createElement("div");
+    tile.className="tile";
+    tile.dataset.index=i;
+    tile.style.top="-"+tileSize+"px";
+
+    let candy=getRandomCandy(i);
+    tile.style.backgroundImage=`url(${candy})`;
+    tile.addEventListener("click",selectTile);
+
+    block.appendChild(tile);
+    board.appendChild(block);
+    tiles.push(tile);
+
+    setTimeout(()=>tile.style.top="0px",i*20);
+  }
+}
+
+function getRandomCandy(i){
+  return candyImages[Math.floor(Math.random()*candyImages.length)];
+}
+
+/* --- TAÞ SEÇÝM & TAKAS --- */
+function selectTile(){
+  if(!selected){
+    selected=this; this.style.transform="scale(1.2)";
+  } else {
+    if(isNear(this,selected)) swap(this,selected);
+    selected.style.transform="scale(1)";
+    selected=null;
+  }
+}
+
+function isNear(t1,t2){
+  let a=+t1.dataset.index, b=+t2.dataset.index;
+  return a===b-1||a===b+1||a===b-width||a===b+width;
+}
+
+function swap(a,b){
+  let c=a.style.backgroundImage, d=b.style.backgroundImage;
+  a.style.backgroundImage=d; b.style.backgroundImage=c;
+
+  moves--; document.getElementById("moves").innerText=moves;
+  checkMatch([+a.dataset.index,+b.dataset.index]);
+
+  if(moves<=0) endLevel();
+}
+
+/* --- PUAN / EÞLEÞME --- */
+function checkMatch(arr){
+  let found=false;
+  arr.forEach(i=>{
+    let h=checkH(i), v=checkV(i);
+    if(h.length===3){ blast(h); found=true; }
+    if(v.length===3){ blast(v); found=true; }
+  });
+
+  if(found){
+    score+=10;
+    document.getElementById("score").innerText=score;
+  }
+}
+
+function checkH(i){
+  if(i%width>width-3) return [];
+  let c=tiles[i].style.backgroundImage;
+  return (c===tiles[i+1].style.backgroundImage&&c===tiles[i+2].style.backgroundImage)?[i,i+1,i+2]:[];
+}
+
+function checkV(i){
+  if(Math.floor(i/width)>height-3) return [];
+  let c=tiles[i].style.backgroundImage;
+  return (c===tiles[i+width].style.backgroundImage&&c===tiles[i+2*width].style.backgroundImage)?[i,i+width,i+2*width]:[];
+}
+
+function blast(ids){
+  ids.forEach((id,i)=>{
+    setTimeout(()=>{
+      tiles[id].style.backgroundImage=`url(${explosionImage})`;
+      setTimeout(()=>tiles[id].style.backgroundImage=`url(${getRandomCandy(id)})`,200);
+    },i*50);
+  });
+}
+
+/* --- SEVÝYE SONU --- */
+function endLevel(){
+  if(score>=targetScore) alert("Seviye geçti!");
+  else alert("Kaybettin!");
+
+  level++;
+  showMenu();
+}
+</script>
+
+</body>
+</html>
