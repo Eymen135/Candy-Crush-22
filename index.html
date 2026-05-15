@@ -1,241 +1,179 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Candy Crush – Modlu & Ortalanmış</title>
-<style>
-body {
-    font-family: Arial;
-    margin:0;
-    background:#f7e8ff;
-    display:flex;
-    flex-direction: column;
-    align-items: center; /* yatay ortala */
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS Core v2.0 - Sesli ve Yazılı Asistan</title>
+    <style>
+        /* SARI VE SİYAH PREMIUM SİBERPUNK TASARIM */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+        body { background: #050508; color: #eab308; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        
+        /* JARVIS PARLAYAN MERKEZİ ÇEKİRDEK */
+        .jarvis-container { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 25px; }
+        .cekirdek { width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(234,179,8,0.2) 0%, rgba(0,0,0,0) 70%); border: 3px double #eab308; box-shadow: 0 0 30px rgba(234,179,8,0.4), inset 0 0 30px rgba(234,179,8,0.3); animation: Donme 8s linear infinite; }
+        .cekirdek-ic { position: absolute; width: 80px; height: 80px; border-radius: 50%; border: 2px dashed #ffffff; box-shadow: 0 0 20px rgba(255,255,255,0.4); animation: Dalga 1.2s ease-in-out infinite alternate; }
+        
+        h1 { font-size: 22px; letter-spacing: 3px; font-weight: 900; margin-bottom: 5px; text-shadow: 0 0 10px rgba(234,179,8,0.5); text-transform: uppercase; }
+        .durum { font-size: 13px; color: #a1a1aa; margin-bottom: 15px; height: 20px; font-weight: bold; }
+        
+        /* GELİŞMİŞ YAZILI SOHBET AKIŞ PANELİ */
+        .sohbet-paneli { width: 90%; max-width: 550px; height: 300px; background: rgba(10, 15, 26, 0.85); border: 1px solid rgba(234,179,8,0.4); border-radius: 12px; padding: 20px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5); }
+        .mesaj { padding: 10px 14px; border-radius: 8px; line-height: 1.5; font-size: 13.5px; max-width: 85%; word-wrap: break-word; }
+        .mesaj-kullanici { background: rgba(255, 255, 255, 0.1); color: #ffffff; align-self: flex-end; border-bottom-right-radius: 1px; border-right: 3px solid #ffffff; }
+        .mesaj-jarvis { background: rgba(234, 179, 8, 0.08); color: #eab308; align-self: flex-start; border-bottom-left-radius: 1px; border-left: 3px solid #eab308; }
 
-h1, h2, p { text-align: center; }
+        /* GİRİŞ ALANI (SESLİ BUTON VE YAZI PANELİ BİRLEŞİK) */
+        .kontrol-merkezi { width: 90%; max-width: 550px; display: flex; gap: 10px; align-items: center; }
+        .metin-girdi { flex: 1; background: #0b0f19; color: #ffffff; border: 1px solid rgba(234,179,8,0.4); border-radius: 25px; padding: 14px 20px; font-size: 14px; outline: none; transition: all 0.3s ease; }
+        .metin-girdi:focus { border-color: #facc15; box-shadow: 0 0 12px rgba(234,179,8,0.2); }
+        
+        .btn { border: none; font-weight: bold; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; height: 48px; border-radius: 24px; font-size: 14px; letter-spacing: 0.5px; }
+        .btn-yaz { background: #eab308; color: #000000; padding: 0 22px; box-shadow: 0 4px 12px rgba(234,179,8,0.3); }
+        .btn-yaz:hover { background: #facc15; transform: translateY(-1px); }
+        
+        .btn-ses { background: #1e293b; color: #eab308; border: 1px solid rgba(234,179,8,0.4); width: 120px; }
+        .btn-ses:hover { background: rgba(234,179,8,0.1); }
+        .dinliyor { background: #ef4444 !important; color: white !important; border-color: #ef4444 !important; animation: MikrofonPulse 1s infinite alternate; }
 
-#menu, #game, #settings { display:none; }
-
-button {
-    padding:10px 20px;
-    margin:5px;
-    font-size:18px;
-    cursor:pointer;
-}
-
-/* BOARD */
-#board {
-    display:grid;
-    gap:4px;
-    border:5px solid #333;
-    background:#ddd;
-    padding:5px;
-    transition: transform .3s;
-    justify-content:center; /* grid yatay ortala */
-    align-content:center;   /* grid dikey ortala */
-}
-
-/* TILE */
-.block {
-    background:#fff;
-    border-radius:10px;
-    position:relative;
-    overflow:hidden;
-}
-
-.tile {
-    background-size:cover;
-    width:100%; height:100%;
-    cursor:pointer;
-    position:absolute;
-    transition: top .3s, transform .2s;
-}
-
-/* MODLAR – ZOOM + MERKEZLEME */
-.mode-phone #board { transform: scale(1.25); transform-origin:center center; }
-.mode-tablet #board { transform: scale(1.05); transform-origin:center center; }
-.mode-desktop #board { transform: scale(0.9); transform-origin:center center; }
-</style>
+        /* ANİMASYONLAR */
+        @keyframes Donme { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes Dalga { 0% { transform: scale(0.85); opacity: 0.4; } 100% { transform: scale(1.1); opacity: 1; } }
+        @keyframes MikrofonPulse { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+    </style>
 </head>
-<body class="mode-desktop">
+<body>
 
-<h1>Candy Crush – Modlu & Ortalanmış</h1>
+    <div class="jarvis-container">
+        <div class="cekirdek" id="jarvisCekirdek"></div>
+        <div class="cekirdek-ic"></div>
+    </div>
 
-<!-- MENÜ -->
-<div id="menu">
-  <button onclick="startGame()">Oyuna Başla</button>
-  <button onclick="openSettings()">Ayarlar</button>
-</div>
+    <h1>JARVIS CORE INFRASTRUCTURE</h1>
+    <div class="durum" id="sistemDurumu">SİSTEM ÇEVRİMİÇİ</div>
 
-<!-- OYUN -->
-<div id="game">
-  <h2 id="levelTitle"></h2>
-  <p>Puan: <span id="score">0</span> | Hamle: <span id="moves">0</span> | Hedef: <span id="target">0</span></p>
-  <div id="board"></div>
-  <button onclick="backMenu()">Ana Menü</button>
-</div>
+    <!-- SOHBET AKIŞI -->
+    <div class="sohbet-paneli" id="sohbetKutusu">
+        <div class="mesaj mesaj-jarvis">
+            Jarvis: Bağlantı güvenli. Çekirdek algoritmalar hazır. Dinliyorum veya yazmanızı bekliyorum, Efendim.
+        </div>
+    </div>
 
-<!-- AYARLAR -->
-<div id="settings">
-  <h2>Ayarlar</h2>
-  <button onclick="setMode('phone')">📱 Telefon Modu</button>
-  <button onclick="setMode('tablet')">📟 Tablet Modu</button>
-  <button onclick="setMode('desktop')">💻 Bilgisayar Modu</button>
-  <br><br>
-  <button onclick="closeSettings()">Geri</button>
-</div>
+    <!-- ALT KONTROLLER -->
+    <div class="kontrol-merkezi">
+        <button class="btn btn-ses" id="sesBtn" onclick="JarvisProtokol.sesliDinlemeyiBaslat()">🎤 SESLİ</button>
+        <input type="text" id="klavyeGirdisi" class="metin-girdi" placeholder="Jarvis'e yazın..." onkeydown="if(event.key === 'Enter') JarvisProtokol.yaziliGonder()">
+        <button class="btn btn-yaz" onclick="JarvisProtokol.yaziliGonder()">GÖNDER</button>
+    </div>
 
-<script>
-/* --- OYUN VERİLERİ --- */
-let width=7, height=7, tileSize=70;
-const candyImages=["resim1.png","resim2.png","resim3.png"];
-const explosionImage="patlama_efekti.png";
+    <script>
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const synth = window.speechSynthesis;
 
-let board=document.getElementById("board");
-let tiles=[], selected=null;
-let score=0, moves=15, targetScore=100, level=1;
+        const JarvisProtokol = {
+            rec: SpeechRecognition ? new SpeechRecognition() : null,
+            isListening: false,
 
-let menu=document.getElementById("menu");
-let game=document.getElementById("game");
-let settings=document.getElementById("settings");
+            init() {
+                if (!this.rec) {
+                    document.getElementById("sistemDurumu").innerText = "HATA: SES TANIMA DESTEKLENMİYOR";
+                    return;
+                }
+                this.rec.lang = "tr-TR";
+                this.rec.continuous = false;
+                this.rec.interimResults = false;
 
-/* --- MENÜ --- */
-showMenu();
-function showMenu(){ hideAll(); menu.style.display="block"; }
-function backMenu(){ hideAll(); showMenu(); }
-function hideAll(){ menu.style.display=game.style.display=settings.style.display="none"; }
+                this.rec.onresult = (event) => {
+                    const girdi = event.results[0][0].transcript;
+                    this.mesajEkle(girdi, "mesaj-kullanici");
+                    this.analizEtVeCevapla(girdi);
+                };
 
-/* --- AYARLAR --- */
-function openSettings(){ hideAll(); settings.style.display="block"; }
+                this.rec.onend = () => {
+                    this.isListening = false;
+                    const btn = document.getElementById("sesBtn");
+                    btn.innerText = "🎤 SESLİ";
+                    btn.classList.remove("dinliyor");
+                    document.getElementById("sistemDurumu").innerText = "SİSTEM ÇEVRİMİÇİ";
+                };
+            },
 
-function setMode(mode){
-  document.body.className="mode-"+mode;
-  if(mode==="phone") tileSize=45;
-  if(mode==="tablet") tileSize=60;
-  if(mode==="desktop") tileSize=70;
-  alert(mode.toUpperCase()+" modu aktif!");
-  closeSettings();
-}
+            sesliDinlemeyiBaslat() {
+                if (this.isListening) return;
+                if (synth.speaking) synth.cancel();
 
-function closeSettings(){ hideAll(); showMenu(); }
+                this.isListening = true;
+                const btn = document.getElementById("sesBtn");
+                btn.innerText = "🎧 DİNLİYOR";
+                btn.classList.add("dinliyor");
+                document.getElementById("sistemDurumu").innerText = "MATRİS SİZİ DİNLİYOR...";
+                
+                this.rec.start();
+            },
 
-/* --- OYUN BAŞLAT --- */
-function startGame(){
-  score=0; moves=15; targetScore=100*level;
-  document.getElementById("score").innerText=score;
-  document.getElementById("moves").innerText=moves;
-  document.getElementById("target").innerText=targetScore;
-  document.getElementById("levelTitle").innerText="Seviye "+level;
+            yaziliGonder() {
+                const girdiAlani = document.getElementById("klavyeGirdisi");
+                const metin = girdiAlani.value.trim();
+                if (!metin) return;
 
-  hideAll(); game.style.display="block";
-  createBoard();
-}
+                if (synth.speaking) synth.cancel();
 
-/* --- TAHTA --- */
-function createBoard(){
-  tiles=[]; board.innerHTML="";
-  board.style.gridTemplateColumns=`repeat(${width},${tileSize}px)`;
-  board.style.gridTemplateRows=`repeat(${height},${tileSize}px)`;
+                this.mesajEkle(metin, "mesaj-kullanici");
+                girdiAlani.value = "";
+                this.analizEtVeCevapla(metin);
+            },
 
-  for(let i=0;i<width*height;i++){
-    let block=document.createElement("div");
-    block.className="block";
-    block.style.width=tileSize+"px";
-    block.style.height=tileSize+"px";
+            // EMREDERSİNİZ KELİMESİ TAMAMEN KALDIRILMIŞ CEVAP YAPISI
+            analizEtVeCevapla(hamMetin) {
+                const metin = hamMetin.toLowerCase();
+                let cevap = "Bu veri algoritmalarımla eşleşmedi. Detay vermenizi rica ediyorum.";
 
-    let tile=document.createElement("div");
-    tile.className="tile";
-    tile.dataset.index=i;
-    tile.style.top="-"+tileSize+"px";
+                if (metin.includes("merhaba") || metin.includes("selam")) {
+                    cevap = "Merhaba. Sistemler stabil bir şekilde çalışıyor, dinlemedeyim.";
+                } else if (metin.includes("nasılsın")) {
+                    cevap = "Merkezi işlem birimim ve fonksiyonlarım tamamen sorunsuz çalışıyor. Sorduğunuz için teşekkürler, siz nasılsınız?";
+                } else if (metin.includes("kimsin") || metin.includes("adın ne")) {
+                    cevap = "Ben Jarvis. Sizin için özel olarak yapılandırılmış yazılı ve sesli yapay zeka asistanıyım.";
+                } else if (metin.includes("saat kaç")) {
+                    const saat = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                    cevap = "Zaman verisi güncellendi: Saat şu an " + saat + ".";
+                } else if (metin.includes("kapat") || metin.includes("hoşça kal") || metin.includes("güle güle")) {
+                    cevap = "Anlaşıldı. Arka plan işlemlerine geçiş yapıyorum. İstediğiniz an buradayım.";
+                } else if (metin.includes("teşekkürler") || metin.includes("sağol")) {
+                    cevap = "Rica ederim. Yardımcı olabildiysem ne mutlu bana.";
+                }
 
-    let candy=getRandomCandy(i);
-    tile.style.backgroundImage=`url(${candy})`;
-    tile.addEventListener("click",selectTile);
+                setTimeout(() => {
+                    this.mesajEkle("Jarvis: " + cevap, "mesaj-jarvis");
+                    this.seslendir(cevap);
+                }, 400);
+            },
 
-    block.appendChild(tile);
-    board.appendChild(block);
-    tiles.push(tile);
+            seslendir(metin) {
+                const utterance = new SpeechSynthesisUtterance(metin);
+                utterance.lang = "tr-TR";
+                utterance.rate = 1.0;
+                utterance.pitch = 0.85; // Ses tonunu hafif tok yapar
+                
+                document.getElementById("sistemDurumu").innerText = "JARVIS YANITLIYOR...";
+                synth.speak(utterance);
+                
+                utterance.onend = () => {
+                    document.getElementById("sistemDurumu").innerText = "SİSTEM ÇEVRİMİÇİ";
+                };
+            },
 
-    setTimeout(()=>tile.style.top="0px",i*20);
-  }
-}
+            mesajEkle(metin, sinif) {
+                const kutu = document.getElementById("sohbetKutusu");
+                const div = document.createElement("div");
+                div.className = `mesaj ${sinif}`;
+                div.innerText = metin;
+                kutu.appendChild(div);
+                kutu.scrollTop = kutu.scrollHeight;
+            }
+        };
 
-function getRandomCandy(i){
-  return candyImages[Math.floor(Math.random()*candyImages.length)];
-}
-
-/* --- TAŞ SEÇİM & TAKAS --- */
-function selectTile(){
-  if(!selected){
-    selected=this; this.style.transform="scale(1.2)";
-  } else {
-    if(isNear(this,selected)) swap(this,selected);
-    selected.style.transform="scale(1)";
-    selected=null;
-  }
-}
-
-function isNear(t1,t2){
-  let a=+t1.dataset.index, b=+t2.dataset.index;
-  return a===b-1||a===b+1||a===b-width||a===b+width;
-}
-
-function swap(a,b){
-  let c=a.style.backgroundImage, d=b.style.backgroundImage;
-  a.style.backgroundImage=d; b.style.backgroundImage=c;
-
-  moves--; document.getElementById("moves").innerText=moves;
-  checkMatch([+a.dataset.index,+b.dataset.index]);
-
-  if(moves<=0) endLevel();
-}
-
-/* --- PUAN / EŞLEŞME --- */
-function checkMatch(arr){
-  let found=false;
-  arr.forEach(i=>{
-    let h=checkH(i), v=checkV(i);
-    if(h.length===3){ blast(h); found=true; }
-    if(v.length===3){ blast(v); found=true; }
-  });
-
-  if(found){
-    score+=10;
-    document.getElementById("score").innerText=score;
-  }
-}
-
-function checkH(i){
-  if(i%width>width-3) return [];
-  let c=tiles[i].style.backgroundImage;
-  return (c===tiles[i+1].style.backgroundImage&&c===tiles[i+2].style.backgroundImage)?[i,i+1,i+2]:[];
-}
-
-function checkV(i){
-  if(Math.floor(i/width)>height-3) return [];
-  let c=tiles[i].style.backgroundImage;
-  return (c===tiles[i+width].style.backgroundImage&&c===tiles[i+2*width].style.backgroundImage)?[i,i+width,i+2*width]:[];
-}
-
-function blast(ids){
-  ids.forEach((id,i)=>{
-    setTimeout(()=>{
-      tiles[id].style.backgroundImage=`url(${explosionImage})`;
-      setTimeout(()=>tiles[id].style.backgroundImage=`url(${getRandomCandy(id)})`,200);
-    },i*50);
-  });
-}
-
-/* --- SEVİYE SONU --- */
-function endLevel(){
-  if(score>=targetScore) alert("Seviye geçti!");
-  else alert("Kaybettin!");
-
-  level++;
-  showMenu();
-}
-</script>
-
+        JarvisProtokol.init();
+    </script>
 </body>
 </html>
